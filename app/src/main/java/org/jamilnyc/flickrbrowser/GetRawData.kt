@@ -12,11 +12,16 @@ enum class DownloadStatus {
 }
 
 private const val TAG = "GetRawData"
-class GetRawData : AsyncTask<String, Void, String>() {
+class GetRawData(private val listener: OnDownloadComplete) : AsyncTask<String, Void, String>() {
     private var downloadStatus = DownloadStatus.IDLE
 
-    override fun onPostExecute(result: String?) {
-        super.onPostExecute(result)
+    interface OnDownloadComplete {
+        fun onDownloadComplete(data: String, status: DownloadStatus)
+    }
+
+    override fun onPostExecute(result: String) {
+        Log.d(TAG, "onPostExecute() called, parameter is $result")
+        listener.onDownloadComplete(result, downloadStatus)
     }
 
     override fun doInBackground(vararg params: String?): String {
@@ -27,7 +32,9 @@ class GetRawData : AsyncTask<String, Void, String>() {
 
         try {
             downloadStatus = DownloadStatus.OK
-            return URL(params[0]).readText()
+            val url = params[0]
+            Log.d(TAG, "Fetching data from URL $url")
+            return URL(url).readText()
         } catch (e: Exception) {
             val errorMessage = when (e) {
                 is MalformedURLException ->  {
